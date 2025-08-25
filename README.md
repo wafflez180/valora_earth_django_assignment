@@ -4,6 +4,7 @@
 
 - The "Name of Project" in results page is created by GPT/AI model, not by user
 - The homepage is the "Estimate Your Earnings" page (base / url, not /estimate url)
+- Nav bar is not fixed at top of screen, maintains position not following when scrolling
 - The tab selection in the results page changes from Projected 10-Year Cash Flow to Revenue and Cost (doesn't change on the designs)
 - The image in the results page is not AI-generated, using same image for all results
 - Included AI Analysis Logs model in addition to Estimates and Inquiries models
