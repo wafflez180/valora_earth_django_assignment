@@ -1,0 +1,41 @@
+{% load static %}
+<!-- Shared Navigation Component -->
+<header class="shadow-sm px-4 h-16 flex justify-between items-center relative z-50" style="background-color: #1B2210;">
+    <div class="flex items-center space-x-2">
+        <!-- Valora Earth Logo -->
+        <a href="{% url 'main_app:index' %}" class="hover:opacity-80 transition-opacity duration-200">
+            <img src="{% static 'valora_earth_logo.svg' %}" alt="Valora Earth Logo" class="h-8 p-0.5 object-contain" style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
+        </a>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+        <!-- AI Chat Bubble - Only show on results page -->
+        {% if show_ai_chat %}
+        <button class="text-valora-yellow hover:text-white transition-colors duration-200 mr-2" onclick="toggleAIChat()">
+            <img src="{% static 'ai_chat_bubble.svg' %}" alt="AI Chat" class="w-6 h-6">
+        </button>
+        {% endif %}
+        
+        <!-- Menu Button -->
+        <button class="text-valora-yellow">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<script>
+function goBack() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = "{% url 'main_app:index' %}";
+    }
+}
+
+function toggleAIChat() {
+    // TODO: Implement AI chat functionality
+    alert('AI Chat functionality coming soon!');
+}
+</script>

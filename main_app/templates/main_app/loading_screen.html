@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generating Estimate - Valora Earth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'valora-green': '#4F7C8A',
+                        'valora-dark-green': '#2D4A53',
+                        'valora-light-green': '#E8F5E8',
+                        'valora-yellow': '#EFFE8B',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f8e8 0%, #e8f5e8 50%, #f0f8e8 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("{% static 'valora_background_pattern.svg' %}");
+            background-size: 300px 300px;
+            opacity: 0.03;
+            z-index: -1;
+        }
+        
+        /* Curved lines background effect */
+        .curved-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .curved-bg::before,
+        .curved-bg::after {
+            content: '';
+            position: absolute;
+            border: 2px solid rgba(79, 124, 138, 0.1);
+            border-radius: 50%;
+        }
+        
+        .curved-bg::before {
+            width: 400px;
+            height: 400px;
+            top: -200px;
+            right: -200px;
+        }
+        
+        .curved-bg::after {
+            width: 600px;
+            height: 600px;
+            bottom: -300px;
+            left: -300px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Shared Navigation -->
+    {% include 'main_app/includes/navbar.html' with show_back_button=True %}
+
+    <!-- Django Messages Display -->
+    {% include 'main_app/includes/messages.html' %}
+
+    <!-- Background Gradients -->
+    <div class="fixed bottom-0 left-0 right-0 h-full -z-10 opacity-75 -mt-8" style="background: radial-gradient(89.69% 46.5% at 71.63% 0%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%), radial-gradient(98.1% 54.09% at 27.48% 83.77%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%);"></div>
+
+    <!-- Background Pattern at bottom -->
+    <div class="fixed inset-0 flex items-center justify-center opacity-100 -z-10 -mt-8">
+        <img src="{% static 'valora_background_pattern.svg' %}" alt="" class="w-full h-full object-cover">
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex flex-col items-center justify-center min-h-screen px-4">
+        <!-- Hidden data for JavaScript -->
+        <div id="inquiry-data" data-inquiry-id="{{ inquiry_id }}" style="display: none;"></div>
+        
+        <div class="text-center max-w-md w-full">
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="w-[85%] mx-auto bg-[#F9FCE9] rounded-full h-3 mb-4 shadow-inner border border-[#3B4F1C] p-[2px]">
+                    <div id="progressBar" class="bg-valora-dark-green h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+                <p class="text-[#1B2210] text-xs font-normal">We're calculating your estimated earnings</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Simulate loading progress and process estimate data
+        const inquiryId = document.getElementById('inquiry-data').dataset.inquiryId;
+
+        async function startProcessing() {
+            try {
+                // Step 1: Initial progress
+                await updateProgress(10);
+                await simulateDelay(500);
+                
+                // Step 2: Process estimate data
+                await updateProgress(30);
+                await simulateDelay(800);
+                
+                // Step 3: Generate AI estimate using OpenAI
+                await updateProgress(60);
+                
+                if (!inquiryId) {
+                    throw new Error('No inquiry ID found');
+                }
+                
+                // Call the AI estimate generation endpoint
+                const response = await fetch(`/api/generate-estimate/${inquiryId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate AI estimate');
+                }
+                
+                const result = await response.json();
+                console.log('AI Estimate Result:', result);
+                
+                // Step 4: Finalize
+                await updateProgress(90);
+                await simulateDelay(500);
+                
+                // Step 5: Complete
+                await updateProgress(100);
+                await simulateDelay(800);
+                
+                        // Redirect to results page with the inquiry ID
+        window.location.href = `/estimate-results/${inquiryId}/`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                await updateProgress(100);
+                await simulateDelay(1000);
+                
+                // Redirect to landing page on error
+                window.location.href = '{% url "main_app:index" %}';
+            }
+        }
+
+        async function updateProgress(percentage) {
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+        }
+
+        async function simulateDelay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Start processing when page loads
+        document.addEventListener('DOMContentLoaded', startProcessing);
+    </script>
+</body>
+</html>

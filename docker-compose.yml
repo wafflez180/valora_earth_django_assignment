@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Django Web Application
+  web:
+    build: .
+    container_name: valora_earth_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/staticfiles  # Exclude staticfiles from volume mount in dev
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=valora_earth.settings
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-qwsce@w*dz$07-)^2!4grj_yss(6*a=s2!4*a=s2!10*&zbwsp616bpn^}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+    networks:
+      - valora_network
+    command: >
+      sh -c "python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000"
+
+networks:
+  valora_network:
+    driver: bridge

@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valora Earth - Property Estimate Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'valora-green': '#4F7C8A',
+                        'valora-dark-green': '#2D4A53',
+                        'valora-light-green': '#E8F5E8',
+                        'valora-yellow': '#EFFE8B',
+                    },
+                    fontFamily: {
+                        'sans': ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <!-- Shared Navigation -->
+    {% include 'main_app/includes/navbar.html' with show_back_button=False %}
+
+    <!-- Django Messages Display -->
+    {% include 'main_app/includes/messages.html' %}
+
+    <!-- Landing Page Content -->
+    <main class="relative">
+        <!-- Background Image Section -->
+        <div class="relative h-[514px] overflow-hidden -mt-16 z-10">
+            <!-- Farm Background Image -->
+            <img src="{% static 'farm_background_image.jpg' %}" alt="Agricultural fields" class="absolute inset-0 w-full h-full object-cover">
+            <!-- Black Overlay with 50% opacity -->
+            <div class="absolute inset-0 bg-black opacity-50"></div>
+            <!-- Content Overlay -->
+            <div class="absolute inset-0 flex flex-col justify-end items-start text-left text-white px-6 pb-0 z-20">
+                <h1 class="text-[40px] font-normal mb-8 leading-[150%]">
+                    <span class="text-white">Regenerative agriculture </span>
+                    <span class="text-[#EFFE8B]">made simple</span>
+                </h1>
+                <div class="flex flex-col justify-start space-y-4 text-lg sm:text-xl mb-8">
+                    <div class="flex flex-row items-center space-x-3">
+                        <span class="text-[24px] font-light leading-[150%]">Plan</span>
+                        <img src="{% static 'homepage_plan_icon.svg' %}" alt="Plan" class="w-7 h-7">
+                    </div>
+                    <div class="flex flex-row items-center space-x-3">
+                        <span class="text-[24px] font-light leading-[150%]">Regenerate</span>
+                        <img src="{% static 'homepage_regenerate_icon.svg' %}" alt="Regenerate" class="w-6 h-6">
+                    </div>
+                    <div class="flex flex-row items-center space-x-3">
+                        <span class="text-[24px] font-light leading-[150%]">Prosper</span>
+                        <img src="{% static 'homepage_prosper_icon.svg' %}" alt="Prosper" class="w-6 h-6">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valora Arrow Icon -->
+        <div class="flex justify-center mb-5 mt-5">
+            <img src="{% static 'valora_arrow_icon.svg' %}" alt="Valora Arrow" class="w-9 h-9">
+        </div>
+        
+        <!-- Background Gradients -->
+        <div class="fixed bottom-0 left-0 right-0 h-full -z-10 opacity-75" style="background: radial-gradient(89.69% 46.5% at 71.63% 0%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%), radial-gradient(98.1% 54.09% at 27.48% 83.77%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%);"></div>
+
+        <!-- Background Pattern at bottom -->
+        <div class="fixed inset-0 flex items-center justify-center opacity-100 -z-10">
+            <img src="{% static 'valora_background_pattern.svg' %}" alt="" class="w-full h-full object-cover">
+        </div>
+        
+        <!-- Estimate Form Card -->
+        <div class="px-5 mb-32 relative z-10">
+            <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-4 border-2 border-black relative overflow-hidden">
+                <h2 class="text-lg font-semibold text-[#151515] mt-1 mb-1 text-center leading-[150%]">Estimate Your Earnings</h2>
+                
+                <form id="propertyEstimateForm" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- Land Plot Size -->
+                    <div class="relative">
+                        <label class="block text-sm font-regular text-[#151515] mb-2 text-[14px]">Land Plot Size</label>
+                        <div class="relative">
+                            <input 
+                                type="number" 
+                                id="lot_size" 
+                                name="lot_size" 
+                                required
+                                min="0.01"
+                                step="0.01"
+                                value="24"
+                                class="w-full px-4 py-3 pr-20 rounded-lg bg-[#F0F0F0] shadow-sm text-[#151515] text-[14px]"
+                                placeholder="24"
+                            >
+                            <select 
+                                id="lot_size_unit" 
+                                name="lot_size_unit" 
+                                class="absolute right-4 top-0 h-full rounded-r-lg bg-transparent text-[#151515] font-medium text-[14px] z-10"
+                                onchange="adjustSelectWidth(this)"
+                            >
+                                <option value="acres">acres</option>
+                                <option value="hectares">hectares</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Land Plot Address -->
+                    <div>
+                        <label class="block text-sm font-regular text-[#151515] mb-2 text-[14px]">Land plot address or region</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-1 pl-3 flex items-center pointer-events-none">
+                                <img src="{% static 'valora_search_icon.svg' %}" alt="Search" class="h-6 w-6">
+                            </div>
+                            <input 
+                                type="text" 
+                                name="region" 
+                                value="São José do Rio Preto, Brazil"
+                                class="w-full pl-12 pr-4 py-3 rounded-lg bg-[#F0F0F0] shadow-sm text-[#151515] font-medium text-[14px]"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Start Estimate Button -->
+                    <button 
+                        type="submit" 
+                        id="startEstimateBtn"
+                        class="w-full bg-[#151515] hover:bg-[#0a0a0a] text-[#E5F47F] font-semibold py-3 px-6 rounded-xl transition-all duration-200 text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                        Start Estimate
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript for form handling -->
+    <script>
+        document.getElementById('propertyEstimateForm').addEventListener('submit', function(e) {
+            // Get form data
+            const lotSize = document.getElementById('lot_size').value;
+            const region = document.querySelector('input[name="region"]').value;
+            const lotSizeUnit = document.getElementById('lot_size_unit').value;
+            
+            if (!lotSize || !region) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return;
+            }
+            
+            // Store data in sessionStorage for backup
+            sessionStorage.setItem('lotSize', lotSize);
+            sessionStorage.setItem('region', region);
+            sessionStorage.setItem('lotSizeUnit', lotSizeUnit);
+            
+            console.log('Form submitting with:', { lotSize, region, lotSizeUnit });
+            
+            // Allow form to submit normally to Django
+            // Django will process the data and redirect to estimate
+        });
+
+        // Dynamic select width adjustment
+        function adjustSelectWidth(select) {
+            const option = select.options[select.selectedIndex];
+            const text = option.text;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = '14px Figtree'; // Match the font used in the select
+            const textWidth = context.measureText(text).width;
+            const padding = 32; // Account for padding and arrow
+            select.style.width = Math.max(textWidth + padding, 64) + 'px'; // Minimum 64px width
+        }
+
+        // Initialize and add event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.querySelector('select');
+            adjustSelectWidth(select);
+            select.addEventListener('change', function() {
+                adjustSelectWidth(this);
+            });
+        });
+    </script>
+</body>
+</html>

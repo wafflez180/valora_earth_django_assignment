@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Estimate - Valora Earth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'valora-green': '#4F7C8A',
+                        'valora-dark-green': '#2D4A53',
+                        'valora-light-green': '#E8F5E8',
+                        'valora-yellow': '#EFFE8B',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-green-50 min-h-screen">
+    <!-- Shared Navigation -->
+    {% include 'main_app/includes/navbar.html' with show_back_button=True %}
+
+    <!-- Django Messages Display -->
+    {% include 'main_app/includes/messages.html' %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 h-[calc(100vh-64px)]">
+        <div class="max-w-md mx-auto h-full flex flex-col">
+            <!-- Background Gradients -->
+            <div class="fixed bottom-0 left-0 right-0 h-full -z-10 opacity-75 -mt-14" style="background: radial-gradient(89.69% 46.5% at 71.63% 0%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%), radial-gradient(98.1% 54.09% at 27.48% 83.77%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%);"></div>
+        
+            <!-- Background Pattern at bottom -->
+            <div class="fixed inset-0 flex items-center justify-center opacity-100 -z-10 -mt-14">
+                <img src="{% static 'valora_background_pattern.svg' %}" alt="" class="w-full h-full object-cover">
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div class="flex items-center w-full -mt-2 px-0">
+                <button onclick="goBack()" class="ml-2 mr-3">
+                    <img src="{% static 'valora_arrow_forward.svg' %}" alt="Back" class="w-4 h-4 transform scale-x-[-1]" style="filter: brightness(0) saturate(100%) invert(8%) sepia(22%) saturate(1348%) hue-rotate(52deg) brightness(96%) contrast(97%);">
+                </button>
+                <div class="flex justify-between flex-1">
+                    <div class="flex-1 h-1 mr-1 rounded-l-full {% if step >= 1 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                    <div class="flex-1 h-1 mr-1 {% if step >= 2 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                    <div class="flex-1 h-1 mr-1 {% if step >= 3 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                    <div class="flex-1 h-1 mr-1 {% if step >= 4 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                    <div class="flex-1 h-1 mr-1 {% if step >= 5 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                    <div class="flex-1 h-1 rounded-r-full {% if step >= 6 %}bg-[#1B2210]{% else %}bg-[#C1CB8B]{% endif %}"></div>
+                </div>
+            </div>
+            
+            <!-- Question Text -->
+            <h2 class="text-xl font-semibold text-[#1B2210] mb-6 mt-8 text-[20px] text-center" id="questionText">
+                {% if step == 1 %}
+                    What's currently on your property?
+                {% elif step == 2 %}
+                    What's your goal with your property?
+                {% elif step == 3 %}
+                    How much time and money are you willing to invest?
+                {% elif step == 4 %}
+                    Almost ready! Anything you're really excited about? Or even not excited about?
+                {% endif %}
+            </h2>
+                
+            <!-- Question Content -->
+                <!-- Form -->
+                <form id="questionForm" method="post" class="flex flex-col h-full">
+                    {% csrf_token %}
+                    <!-- Text Area -->
+                    <textarea 
+                        id="answerText"
+                        name="answer"
+
+                        class="w-full px-4 py-3 border-2 border-[#1B2210] rounded-2xl focus:ring-2 focus:ring-[#1B2210] focus:border-[#1B2210] resize-none h-[300px] text-lg leading-[150%]"
+                        placeholder="{% if step == 1 %}Describe what’s on your land today—crops, livestock, forest, or unused space...{% elif step == 2 %}Do you want to maximize profit, improve soil health, grow specific crops, or something else?{% elif step == 3 %}Are you hands-on, hiring help, or looking for low-maintenance options?{% elif step == 4 %}Share what interests you—like adding trees or growing coffee—and what you’d rather avoid...{% endif %}"
+                        required
+                    ></textarea>
+                    
+                    <!-- Hint Text -->
+                    <p class="text-xs font-regular text-[#1B2210] mt-3 text-center">More information leads to better estimates.</p>
+                    
+                    <!-- Submit Button -->
+                    <div class="mt-auto">
+                        <button 
+                            type="submit"
+                            class="w-full bg-[#151515] hover:bg-[#0a0a0a] text-[#E5F47F] font-semibold py-3 px-6 mb-4 rounded-xl transition-all duration-200 text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                            {% if step == 4 %}
+                                Last Step <img src="{% static 'valora_arrow_forward.svg' %}" alt="Arrow" class="inline-block w-4 h-4 ml-2 -mt-1">
+                            {% else %}
+                                Next Question <img src="{% static 'valora_arrow_forward.svg' %}" alt="Arrow" class="inline-block w-4 h-4 ml-2 -mt-1">
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+        </div>
+    </main>
+
+    <script>
+        function goBack() {
+            const currentStep = {{ step }};
+            if (currentStep > 1) {
+                // Go to previous question
+                window.location.href = "{% url 'main_app:estimate_questionnaire' %}?step=" + (currentStep - 1);
+            } else {
+                // Go back to landing page
+                window.location.href = "{% url 'main_app:index' %}";
+            }
+        }
+
+        // Pre-fill the textarea with existing answer if available
+        document.addEventListener('DOMContentLoaded', function() {
+            const answers = JSON.parse(sessionStorage.getItem('questionnaire_answers') || '{}');
+            const fieldMapping = {
+                1: 'current_property',
+                2: 'property_goals',
+                3: 'investment_capacity',
+                4: 'preferences_concerns'
+            };
+            
+            const currentField = fieldMapping[{{ step }}];
+            const textarea = document.getElementById('answerText');
+            
+            // Load answer from Django context or sessionStorage
+            {% if questionnaire_answers %}
+                const djangoAnswers = {{ questionnaire_answers|safe }};
+                if (djangoAnswers && djangoAnswers[currentField]) {
+                    textarea.value = djangoAnswers[currentField];
+                }
+            {% endif %}
+            
+            if (!textarea.value && answers[currentField]) {
+                textarea.value = answers[currentField];
+            }
+        });
+
+        // Save answer to sessionStorage when form is submitted
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            const answers = JSON.parse(sessionStorage.getItem('questionnaire_answers') || '{}');
+            const fieldMapping = {
+                1: 'current_property',
+                2: 'property_goals',
+                3: 'investment_capacity',
+                4: 'preferences_concerns'
+            };
+            
+            const currentField = fieldMapping[{{ step }}];
+            const answer = document.getElementById('answerText').value.trim();
+            
+            if (answer) {
+                answers[currentField] = answer;
+                sessionStorage.setItem('questionnaire_answers', JSON.stringify(answers));
+            }
+        });
+    </script>
+</body>
+</html>

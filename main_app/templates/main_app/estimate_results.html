@@ -1,0 +1,709 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valora Earth - Project Financial Projections</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100;200;300;400;500;600;700;800;900&family=Figtree:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'valora-green': '#4F7C8A',
+                        'valora-dark-green': '#2D4A53',
+                        'valora-light-green': '#E8F5E8',
+                        'valora-yellow': '#EFFE8B',
+                    },
+                    fontFamily: {
+                        'lexend': ['Lexend Deca', 'sans-serif'],
+                        'figtree': ['Figtree', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Shared Navigation -->
+    {% include 'main_app/includes/navbar.html' with show_back_button=True show_ai_chat=True %}
+
+    <!-- Django Messages Display -->
+    {% include 'main_app/includes/messages.html' %}
+
+    <!-- Background Gradients -->
+    <div class="fixed bottom-0 left-0 right-0 h-full -z-10 opacity-75" style="background: radial-gradient(89.69% 46.5% at 71.63% 0%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%), radial-gradient(98.1% 54.09% at 27.48% 83.77%, rgba(229, 244, 127, 1) 0%, rgba(229, 244, 127, 0) 100%);"></div>
+
+    <!-- Main Content -->
+    <main class="px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-4xl mx-auto">
+                 <!-- Project Title -->
+         <h1 class="text-sm font-normal text-gray-800 mb-6 mt-1 text-center font-lexend" id="projectTitle">
+             {% if estimate %}{{ estimate.project_name }}{% else %}Sustainable Regeneration at Sao Jose{% endif %}
+         </h1>
+        
+        <!-- Project Illustration -->
+         <div class="text-center mb-5">
+             <div class="max-w-fit mx-auto rounded-xl overflow-hidden relative border border-[#C5C8B2]">
+                 <img src="{% static 'farm_results.png' %}" alt="Agricultural fields" class="w-auto h-auto max-w-full max-h-[30vh] object-contain">
+                 
+                 <!-- Gradient Overlay -->
+                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                 
+                                 <!-- Location Label - Bottom Left -->
+                <div class="absolute bottom-0 left-1 p-4">
+                    <p class="text-white text-xs font-regular" id="locationText">
+                        {% if inquiry %}{{ inquiry.region }}{% else %}São José do Rio Preto, Brazil{% endif %}
+                    </p>
+                </div>
+                
+                <!-- Size Label - Bottom Right -->
+                <div class="absolute bottom-0 right-0 p-4">
+                    <p class="text-white text-xs font-semibold" id="sizeText">
+                        {% if inquiry %}{{ inquiry.lot_size }} {{ inquiry.lot_size_unit }}{% else %}24 acres{% endif %}
+                    </p>
+                </div>
+             </div>
+         </div>
+        
+        <!-- Section Title -->
+        <h2 class="text-lg font-semibold text-gray-800 mb-4" id="sectionTitle">Projected 10-Year Cash Flow</h2>
+        
+        <!-- Tab Navigation -->
+        <div class="flex space-x-2 mb-5 overflow-x-auto">
+            <button 
+                id="cashFlowTab"
+                onclick="showTab('cashFlow')"
+                class="flex-1 py-2 px-4 bg-[#1B2210] text-white rounded-full font-medium text-sm border border-[#1B2210]"
+            >
+                Cash Flow
+            </button>
+            <button 
+                id="revenueTab"
+                onclick="showTab('revenue')"
+                class="flex-1 py-2 px-4 bg-transparent text-[#1B2210] rounded-full font-medium text-sm border border-[#1B2210]"
+            >
+                Revenue
+            </button>
+            <button 
+                id="costTab"
+                onclick="showTab('cost')"
+                class="flex-1 py-2 px-4 bg-transparent text-[#1B2210] rounded-full font-medium text-sm border border-[#1B2210]"
+            >
+                Cost
+            </button>
+        </div>
+        
+        <!-- Tab Content -->
+        <div id="cashFlowContent" class="tab-content">
+            <div class="mb-4">
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    {% if estimate %}{{ estimate.project_description }}{% else %}[100 word description about this project]{% endif %}
+                </p>
+            </div>
+            
+            <!-- Net Cash Flow Chart -->
+            <div class="mb-6">
+                <div class="bg-white rounded-lg px-4 py-3 border border-[#1B2210]">
+                    <!-- Chart Title -->
+                    <h3 class="text-xs font-light text-[#959D87] mb-3 text-center">Net Cash Flow (USD) per Year</h3>
+                    
+                    <!-- Legend -->
+                    <div class="flex flex-row justify-center items-center space-x-4 mb-4 py-1">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#5A9400] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Profit</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#AB2626] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Loss</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart -->
+                    <div class="h-48">
+                        <canvas id="cashFlowChart"></canvas>
+                    </div>
+                    
+                    <!-- Disclaimer -->
+                    <p class="text-center mt-3 text-[10px] font-light text-[#A4A4A4]">Estimates only. More data will improve accuracy.</p>
+                </div>
+            </div>
+            
+            <!-- Cash Flow Table -->
+            <div class="mb-4">
+                <div class="bg-white rounded-xl border border-[#1B2210] overflow-hidden">
+                    <table class="w-full text-sm border-collapse font-figtree">
+                        <thead>
+                            <tr class="bg-[#1B2210] text-white">
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px;">Year</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Total Revenue</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Total Costs</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Net Cash Flow</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashFlowTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="revenueContent" class="tab-content hidden">
+            <div class="mb-4">
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    {% if estimate %}{{ estimate.project_description }}{% else %}[100 word description about this project]{% endif %}
+                </p>
+            </div>
+            
+            <!-- Revenue Breakdown Chart -->
+            <div class="mb-6">
+                <div class="bg-white rounded-xl px-4 py-3 border border-[#1B2210]">
+                    <!-- Chart Title -->
+                    <h3 class="text-xs font-light text-[#959D87] mb-3 text-center">Revenue Breakdown (USD) per Year</h3>
+                    
+                    <!-- Legend -->
+                    <div class="flex flex-row justify-center items-center space-x-4 mb-4 py-1">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#5A9400] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Agricultural Sales</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#C1CB8B] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Ecosystem Services</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#1B2210] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Subsidies & Incentives</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart -->
+                    <div class="h-48">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    
+                    <!-- Disclaimer -->
+                    <p class="text-center mt-3 text-[10px] font-light text-[#A4A4A4]">Estimates only. More data will improve accuracy.</p>
+                </div>
+            </div>
+            
+            <!-- Revenue Trends Section -->
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-800 mb-2">Revenue Trends Over Time</h4>
+                <p class="text-xs text-gray-600 mb-3">
+                    Compare different revenue sources and understand how they contribute to your overall cashflow.
+                </p>
+                
+                <!-- Revenue Table -->
+                <div class="bg-white rounded-xl border border-[#1B2210] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse font-figtree">
+                        <thead>
+                            <tr class="bg-[#1B2210] text-white">
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px;">Year</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Agricultural Sales</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Ecosystem Services</th>
+                                <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Subsidies & Incentives</th>
+                            </tr>
+                        </thead>
+                        <tbody id="revenueTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="costContent" class="tab-content hidden">
+            <div class="mb-4">
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    {% if estimate %}{{ estimate.project_description }}{% else %}[100 word description about this project]{% endif %}
+                </p>
+            </div>
+            
+            <!-- Cost Breakdown Chart -->
+            <div class="mb-6">
+                <div class="bg-white rounded-xl px-4 py-3 border border-[#1B2210]">
+                    <!-- Chart Title -->
+                    <h3 class="text-xs font-light text-[#959D87] mb-3 text-center">Cost Breakdown (USD) per Year</h3>
+                    
+                    <!-- Legend -->
+                    <div class="flex flex-row justify-center items-center space-x-4 mb-4 py-1">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#EF4444] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Operational Costs</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#F97316] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Infrastructure</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-[#EAB308] rounded-full mr-1"></div>
+                            <span class="text-[10px] font-light text-[#151515]">Maintenance</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart -->
+                    <div class="h-48">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                    
+                    <!-- Disclaimer -->
+                    <p class="text-center mt-3 text-[10px] font-light text-[#A4A4A4]">Estimates only. More data will improve accuracy.</p>
+                </div>
+            </div>
+            
+            <!-- Cost Trends Section -->
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-800 mb-2">Cost Trends Over Time</h4>
+                <p class="text-xs text-gray-600 mb-3">
+                    Track different cost categories and understand how they impact your overall cashflow.
+                </p>
+                
+                <!-- Cost Table -->
+                <div class="bg-white rounded-xl border border-[#1B2210] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse font-figtree">
+                            <thead>
+                                <tr class="bg-[#1B2210] text-white">
+                                    <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px;">Year</th>
+                                    <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Operational Costs</th>
+                                    <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Infrastructure</th>
+                                    <th class="text-left font-medium px-4 border-l border-r border-[#959D87]" style="height: 53px; line-height: 1.2;">Maintenance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costTableBody">
+                                <!-- Table rows will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- JavaScript for interactive features -->
+    <script>
+        let currentTab = 'cashFlow';
+        
+        // Financial data from AI analysis - will be populated from database
+        let financialData = {
+            years: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            revenue: [6000, 12000, 18000, 25000, 32000, 38000, 43000, 47000, 51000, 55500],
+            costs: [11400, 13200, 15000, 16500, 17500, 18000, 18200, 18300, 18400, 17700],
+            cashFlow: [-5400, -1200, 3000, 8500, 14500, 20000, 24800, 28700, 32600, 37800],
+            agriculturalSales: [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000],
+            ecosystemServices: [0, 0, 1000, 2000, 3000, 3500, 4000, 4500, 4800, 5000],
+            subsidies: [1000, 2000, 2000, 3000, 4000, 4500, 4000, 2500, 1200, 500],
+            operationalCosts: [8000, 9000, 10000, 11000, 11500, 12000, 12200, 12300, 12400, 12000],
+            infrastructureCosts: [2000, 2500, 3000, 3500, 4000, 4000, 4000, 4000, 4000, 4000],
+            maintenanceCosts: [1400, 1700, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 1700]
+        };
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFinancialData();
+            initializeCharts();
+            populateTables();
+            updateProjectDetails();
+        });
+        
+        function loadFinancialData() {
+            {% if estimate %}
+                // Load real financial data from the database
+                {% if estimate.cash_flow_projection %}
+                    financialData.cashFlow = {{ estimate.cash_flow_projection|safe }};
+                {% endif %}
+                
+                {% if estimate.revenue_breakdown %}
+                    {% if estimate.revenue_breakdown.agricultural_sales %}
+                        financialData.agriculturalSales = {{ estimate.revenue_breakdown.agricultural_sales|safe }};
+                    {% endif %}
+                    {% if estimate.revenue_breakdown.ecosystem_services %}
+                        financialData.ecosystemServices = {{ estimate.revenue_breakdown.ecosystem_services|safe }};
+                    {% endif %}
+                    {% if estimate.revenue_breakdown.subsidies_incentives %}
+                        financialData.subsidies = {{ estimate.revenue_breakdown.subsidies_incentives|safe }};
+                    {% endif %}
+                {% endif %}
+                
+                {% if estimate.cost_breakdown %}
+                    {% if estimate.cost_breakdown.operational_costs %}
+                        financialData.operationalCosts = {{ estimate.cost_breakdown.operational_costs|safe }};
+                    {% endif %}
+                    {% if estimate.cost_breakdown.infrastructure %}
+                        financialData.infrastructureCosts = {{ estimate.cost_breakdown.infrastructure|safe }};
+                    {% endif %}
+                    {% if estimate.cost_breakdown.maintenance %}
+                        financialData.maintenanceCosts = {{ estimate.cost_breakdown.maintenance|safe }};
+                    {% endif %}
+                {% endif %}
+                
+                // Calculate derived values
+                financialData.revenue = financialData.agriculturalSales.map((ag, i) => 
+                    ag + financialData.ecosystemServices[i] + financialData.subsidies[i]
+                );
+                
+                financialData.costs = financialData.operationalCosts.map((op, i) => 
+                    op + financialData.infrastructureCosts[i] + financialData.maintenanceCosts[i]
+                );
+                
+                // If cash flow projection is not available, calculate it
+                if (!financialData.cashFlow || financialData.cashFlow.length === 0) {
+                    financialData.cashFlow = financialData.revenue.map((rev, i) => rev - financialData.costs[i]);
+                }
+            {% endif %}
+        }
+        
+        function updateProjectDetails() {
+            {% if estimate %}
+                document.getElementById('projectTitle').textContent = '{{ estimate.project_name }}';
+            {% endif %}
+            
+            {% if inquiry %}
+                document.getElementById('locationText').textContent = '{{ inquiry.region }}';
+                document.getElementById('sizeText').textContent = '{{ inquiry.lot_size }} {{ inquiry.lot_size_unit }}';
+            {% endif %}
+        }
+        
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active state from all tabs
+            document.querySelectorAll('button[id$="Tab"]').forEach(button => {
+                button.classList.remove('bg-[#1B2210]', 'text-white');
+                button.classList.add('bg-transparent', 'text-[#1B2210]', 'border', 'border-[#1B2210]');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Content').classList.remove('hidden');
+            
+            // Update selected tab button
+            document.getElementById(tabName + 'Tab').classList.remove('bg-transparent', 'text-[#1B2210]', 'border', 'border-[#1B2210]');
+            document.getElementById(tabName + 'Tab').classList.add('bg-[#1B2210]', 'text-white', 'border', 'border-[#1B2210]');
+            
+            // Update section title based on selected tab
+            const sectionTitle = document.getElementById('sectionTitle');
+            if (sectionTitle) {
+                switch(tabName) {
+                    case 'cashFlow':
+                        sectionTitle.textContent = 'Projected 10-Year Cash Flow';
+                        break;
+                    case 'revenue':
+                        sectionTitle.textContent = 'Projected 10-Year Revenue';
+                        break;
+                    case 'cost':
+                        sectionTitle.textContent = 'Projected 10-Year Cost';
+                        break;
+                }
+            }
+            
+            currentTab = tabName;
+        }
+        
+        function initializeCharts() {
+            // Cash Flow Chart
+            const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+            new Chart(cashFlowCtx, {
+                type: 'bar',
+                data: {
+                    labels: financialData.years.map(year => `${year}`),
+                    datasets: [{
+                        label: 'Net Cash Flow',
+                        data: financialData.cashFlow,
+                        backgroundColor: financialData.cashFlow.map(value => value >= 0 ? '#5A9400' : '#AB2626'),
+                        borderColor: financialData.cashFlow.map(value => value >= 0 ? '#5A9400' : '#AB2626'),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    backgroundColor: 'white',
+                    barThickness: 'flex',
+                    categoryPercentage: 0.6,
+                    barPercentage: 0.9,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: '#E5E7EB' },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                },
+                                callback: function(value) {
+                                    if (value === 0) {
+                                        return '0';
+                                    }
+                                    if (Math.abs(value) >= 1000) {
+                                        return '$' + (value / 1000) + 'K';
+                                    }
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                }
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+            
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: financialData.years.map(year => `${year}`),
+                    datasets: [
+                        {
+                            label: 'Agricultural Sales',
+                            data: financialData.agriculturalSales,
+                            backgroundColor: '#5A9400',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Ecosystem Services',
+                            data: financialData.ecosystemServices,
+                            backgroundColor: '#C1CB8B',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Subsidies & Incentives',
+                            data: financialData.subsidies,
+                            backgroundColor: '#1B2210',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    barThickness: 'flex',
+                    categoryPercentage: 0.6,
+                    barPercentage: 0.8,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#E5E7EB' },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                },
+                                callback: function(value) {
+                                    if (value >= 1000) {
+                                        return '$' + (value / 1000) + 'K';
+                                    }
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                }
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false } },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+            
+            // Cost Chart
+            const costCtx = document.getElementById('costChart').getContext('2d');
+            new Chart(costCtx, {
+                type: 'bar',
+                data: {
+                    labels: financialData.years.map(year => `${year}`),
+                    datasets: [
+                        {
+                            label: 'Operational Costs',
+                            data: financialData.operationalCosts,
+                            backgroundColor: '#EF4444',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Infrastructure',
+                            data: financialData.infrastructureCosts,
+                            backgroundColor: '#F97316',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                                },
+                        {
+                            label: 'Maintenance',
+                            data: financialData.maintenanceCosts,
+                            backgroundColor: '#EAB308',
+                            stack: 'Stack 0',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    barThickness: 'flex',
+                    categoryPercentage: 0.6,
+                    barPercentage: 0.8,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#E5E7EB' },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                },
+                                callback: function(value) {
+                                    if (value >= 1000) {
+                                        return '$' + (value / 1000) + 'K';
+                                    }
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: {
+                                color: '#151515',
+                                font: {
+                                    size: 10,
+                                    weight: '600',
+                                    family: 'Figtree'
+                                }
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false } },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+        }
+        
+        function populateTables() {
+            // Populate Cash Flow Table
+            const cashFlowTableBody = document.getElementById('cashFlowTableBody');
+            cashFlowTableBody.innerHTML = '';
+            
+            financialData.years.forEach((year, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                
+                const netCashFlow = financialData.cashFlow[index];
+                const cashFlowColor = netCashFlow >= 0 ? 'text-[#5A9400]' : 'text-[#AB2626]';
+                
+                row.innerHTML = `
+                    <td class="px-4 border border-[#F0F0F0]" style="height: 53px;">${year}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.revenue[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.costs[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0] ${cashFlowColor}" style="height: 53px;">${netCashFlow >= 0 ? '+' : ''}${netCashFlow.toLocaleString()}</td>
+                `;
+                
+                cashFlowTableBody.appendChild(row);
+            });
+            
+            // Populate Revenue Table
+            const revenueTableBody = document.getElementById('revenueTableBody');
+            revenueTableBody.innerHTML = '';
+            
+            financialData.years.forEach((year, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                
+                row.innerHTML = `
+                    <td class="px-4 border border-[#F0F0F0]" style="height: 53px;">${year}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.agriculturalSales[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.ecosystemServices[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.subsidies[index].toLocaleString()}</td>
+                `;
+                
+                revenueTableBody.appendChild(row);
+            });
+            
+            // Populate Cost Table
+            const costTableBody = document.getElementById('costTableBody');
+            costTableBody.innerHTML = '';
+            
+            financialData.years.forEach((year, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                
+                row.innerHTML = `
+                    <td class="px-4 border border-[#F0F0F0]" style="height: 53px;">${year}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.operationalCosts[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.infrastructureCosts[index].toLocaleString()}</td>
+                    <td class="px-4 text-left border border-[#F0F0F0]" style="height: 53px;">${financialData.maintenanceCosts[index].toLocaleString()}</td>
+                `;
+                
+                costTableBody.appendChild(row);
+            });
+        }
+        
+        function downloadReport() {
+            // TODO: Implement report download functionality
+            alert('Report download functionality coming soon!');
+        }
+        
+        function startNewEstimate() {
+            // Redirect to landing page
+            window.location.href = "{% url 'main_app:index' %}";
+        }
+
+        // Format lot size numbers to remove .00 and leading zeros
+        function formatLotSize() {
+            const sizeText = document.getElementById('sizeText');
+            if (sizeText) {
+                let text = sizeText.textContent;
+                // Replace numbers that end with .00 with integers
+                text = text.replace(/(\d+)\.00/g, '$1');
+                // Remove leading zeros from numbers
+                text = text.replace(/\b0+(\d+)/g, '$1');
+                sizeText.textContent = text;
+            }
+        }
+
+        // Run formatting when page loads
+        document.addEventListener('DOMContentLoaded', formatLotSize);
+    </script>
+</body>
+</html>
